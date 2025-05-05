@@ -81,24 +81,26 @@ export async function getNews(_category?: string): Promise<NewsArticle[]> {
     // Assume the first row is headers, skip it
     const dataRows = rows.slice(1);
 
-    const articles: NewsArticle[] = dataRows
-      .map((row, index) => {
-        // Basic validation: Check if essential fields have content
-        if (!row[0] || !row[4]) {
+    const articles: NewsArticle[] = dataRows.reduce<NewsArticle[]>(
+      (acc, row, index) => {
+        // Check if essential fields have content
+        if (row[0] && row[4]) {
+          acc.push({
+            title: row[0] || "No Title",
+            date: row[1] || undefined, // Column B: Date
+            imageUrl: row[2] || "", // Column C: Image URL
+            summary: row[3] || "No Summary", // Column D: Article Summary/Content
+            url: row[4] || "#", // Column E: Article URL
+            source: row[5] || "Unknown Source", // Column F: Source
+            category: "General", // Assign a default category
+          });
+        } else {
           console.warn(`Skipping row ${index + 2} due to missing title or URL.`);
-          return null; // Skip rows with missing essential data
         }
-        return {
-          title: row[0] || 'No Title',
-          date: row[1] || undefined, // Column B: Date
-          imageUrl: row[2] || '', // Column C: Image URL
-          summary: row[3] || 'No Summary', // Column D: Article Summary/Content
-          url: row[4] || '#', // Column E: Article URL
-          source: row[5] || 'Unknown Source', // Column F: Source
-          category: 'General', // Assign a default category as it's not in the CSV
-        };
-      })
-      .filter((article): article is NewsArticle => article !== null); // Filter out null entries
+        return acc;
+      },
+      []
+    );
 
     return articles;
 
